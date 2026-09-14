@@ -11,16 +11,16 @@ All authenticated routes are per-IP rate-limited (`X-RateLimit-Remaining`).
 | `GET /api/workflows/[id]` | yes | Full workflow incl. definition (owner only) |
 | `PUT /api/workflows/[id]` | yes | Update meta/definition; mirrors graph tables |
 | `DELETE /api/workflows/[id]` | yes | Delete (executions cascade) |
-| `POST /api/workflows/[id]/duplicate` | yes | Copy (disabled by default) |
-| `POST /api/workflows/[id]/execute` | yes | Run with `{ input }` → `{ executionId, status, output, errors, durationMs, nodeResults }` (20 req/min) |
-| `GET /api/workflows/[id]/webhook` | yes | Webhook info (creates endpoint on first read) |
-| `POST /api/workflows/[id]/webhook` | yes | Rotate webhook secret |
-| `GET /api/workflows/[id]/schedule` | yes | Current schedule or null |
-| `PUT /api/workflows/[id]/schedule` | yes | Set `{ everyMinutes: 5–1440, enabled }` |
-| `DELETE /api/workflows/[id]/schedule` | yes | Remove schedule |
+| `POST /api/workflows/[id]?action=duplicate` | yes | Copy (disabled by default) |
+| `POST /api/workflows/[id]?action=execute` | yes | Run with `{ input }` → `{ executionId, status, output, errors, durationMs, nodeResults }` (20 req/min) |
+| `GET /api/workflows/[id]?action=webhook` | yes | Webhook info (creates endpoint on first read) |
+| `POST /api/workflows/[id]?action=webhook` | yes | Rotate webhook secret |
+| `GET /api/workflows/[id]?action=schedule` | yes | Current schedule or null |
+| `PUT /api/workflows/[id]?action=schedule` | yes | Set `{ everyMinutes: 5–1440, enabled }` |
+| `DELETE /api/workflows/[id]?action=schedule` | yes | Remove schedule |
 | `GET /api/executions?workflowId?&status?` | yes | List own executions (max 100), with workflow names |
 | `GET /api/executions/[id]` | yes | Execution + node rows + workflow name |
-| `POST /api/executions/[id]/retry` | yes | Re-run failed execution from first failed node |
+| `POST /api/executions/[id]?action=retry` | yes | Re-run failed execution from first failed node |
 | `POST /api/webhooks/[workflowId]` | secret* | Public ingress; `X-Webhook-Secret` header if a secret is set; 256 KB cap |
 | `GET /api/cron/check-schedules` | secret** | Run due schedules (Vercel cron, ≤10 per tick) |
 | `POST /api/ai/test` | yes | Nemotron smoke test (10 req/min) |

@@ -47,7 +47,7 @@
 
 ## Request flows
 
-- **Manual run:** Builder → `POST /api/workflows/[id]/execute` → engine runs with
+- **Manual run:** Builder → `POST /api/workflows/[id]?action=execute` → engine runs with
   `triggerData = workflowInput = body.input` → node rows persisted incrementally
   → final result (status, output, errors, per-node results).
 - **Webhook:** `POST /api/webhooks/[workflowId]` (optional `X-Webhook-Secret`) →
@@ -55,5 +55,5 @@
   `webhook_response` node controls the HTTP response.
 - **Schedule:** Vercel cron → `GET /api/cron/check-schedules` (every 5 min) →
   runs each due `workflow_schedules` row, advances `next_run_at`.
-- **Retry:** `POST /api/executions/[id]/retry` re-runs from the first failed node,
+- **Retry:** `POST /api/executions/[id]?action=retry` re-runs from the first failed node,
   reusing prior successful outputs as context.

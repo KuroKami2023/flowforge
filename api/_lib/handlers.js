@@ -1,9 +1,7 @@
 /**
- * FlowForge consolidated API — single serverless function.
- *
- * Hobby-plan note: Vercel Hobby allows max 12 functions per deployment, so
- * every /api/* route is dispatched from this one catch-all instead of living
- * in its own file. Routing below mirrors the original file layout exactly:
+ * FlowForge API handlers — shared by the explicit serverless function files
+ * under /api (Vercel Hobby allows max 12 functions, so deep sub-actions are
+ * dispatched via ?action= inside the [id].js files instead of extra files):
  *
  *   GET    /api/health
  *   POST   /api/ai/test
@@ -11,34 +9,34 @@
  *   GET    /api/dashboard/stats
  *   GET    /api/executions
  *   GET    /api/executions/:id
- *   POST   /api/executions/:id/retry
+ *   POST   /api/executions/:id?action=retry
  *   POST   /api/webhooks/:workflowId
  *   GET    /api/workflows
  *   POST   /api/workflows
  *   GET    /api/workflows/:id
  *   PUT    /api/workflows/:id
  *   DELETE /api/workflows/:id
- *   POST   /api/workflows/:id/duplicate
- *   POST   /api/workflows/:id/execute
- *   GET    /api/workflows/:id/schedule
- *   PUT    /api/workflows/:id/schedule
- *   DELETE /api/workflows/:id/schedule
- *   GET    /api/workflows/:id/webhook
- *   POST   /api/workflows/:id/webhook
+ *   POST   /api/workflows/:id?action=duplicate
+ *   POST   /api/workflows/:id?action=execute            (body: { input })
+ *   GET    /api/workflows/:id?action=schedule
+ *   PUT    /api/workflows/:id?action=schedule
+ *   DELETE /api/workflows/:id?action=schedule
+ *   GET    /api/workflows/:id?action=webhook
+ *   POST   /api/workflows/:id?action=webhook            (rotate secret)
  */
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { getUserFromRequest, requireMethod, send } from './_lib/auth.js';
-import { getAdminClient } from './_lib/supabaseAdmin.js';
-import { rateLimitMiddleware } from './_lib/rateLimit.js';
-import { runWorkflow, findFirstFailedNode } from './_lib/executionEngine.js';
+import { getUserFromRequest, requireMethod, send } from './auth.js';
+import { getAdminClient } from './supabaseAdmin.js';
+import { rateLimitMiddleware } from './rateLimit.js';
+import { runWorkflow, findFirstFailedNode } from './executionEngine.js';
 import {
   createExecutionRow,
   persistNodeResult,
   finishExecutionRow,
   mirrorGraph
-} from './_lib/persist.js';
-import { validateWorkflow, validateWorkflowMeta } from './_lib/validator.js';
-import { chatCompletion } from './_lib/nvidiaAI.js';
+} from './persist.js';
+import { validateWorkflow, validateWorkflowMeta } from './validator.js';
+import { chatCompletion } from './nvidiaAI.js';
 
 /* ---------------- health ---------------- */
 
@@ -774,83 +772,19 @@ async function hWorkflowWebhook(req, res) {
   return send(res, 405, { error: 'Method not allowed.' });
 }
 
-/* ---------------- router ---------------- */
-
-function parseQuery(searchParams) {
-  const q = {};
-  for (const [k, v] of searchParams) {
-    if (q[k] === undefined) q[k] = v;
-    else if (Array.isArray(q[k])) q[k].push(v);
-    else q[k] = [q[k], v];
-  }
-  return q;
-}
-
-function decodeGroups(match) {
-  const out = {};
-  if (match.groups) {
-    for (const [k, v] of Object.entries(match.groups)) {
-      try {
-        out[k] = decodeURIComponent(v);
-      } catch {
-        out[k] = v;
-      }
-    }
-  }
-  return out;
-}
-
-const SEG = '[^/]+';
-const ROUTES = [
-  { methods: ['GET'], pattern: /^\/api\/health\/?$/, handler: hHealth },
-  { methods: ['POST'], pattern: /^\/api\/ai\/test\/?$/, handler: hAiTest },
-  { methods: ['GET'], pattern: /^\/api\/cron\/check-schedules\/?$/, handler: hCronCheck },
-  { methods: ['GET'], pattern: /^\/api\/dashboard\/stats\/?$/, handler: hDashboardStats },
-  { methods: ['GET'], pattern: /^\/api\/executions\/?$/, handler: hExecutionsList },
-  { methods: ['GET'], pattern: new RegExp(`^/api/executions/(?<id>${SEG})/?$`), handler: hExecutionGet },
-  { methods: ['POST'], pattern: new RegExp(`^/api/executions/(?<id>${SEG})/retry/?$`), handler: hExecutionRetry },
-  { methods: ['POST'], pattern: new RegExp(`^/api/webhooks/(?<workflowId>${SEG})/?$`), handler: hWebhookIngress },
-  { methods: ['GET', 'POST'], pattern: /^\/api\/workflows\/?$/, handler: hWorkflows },
-  { methods: ['GET', 'PUT', 'DELETE'], pattern: new RegExp(`^/api/workflows/(?<id>${SEG})/?$`), handler: hWorkflowDetail },
-  { methods: ['POST'], pattern: new RegExp(`^/api/workflows/(?<id>${SEG})/duplicate/?$`), handler: hWorkflowDuplicate },
-  { methods: ['POST'], pattern: new RegExp(`^/api/workflows/(?<id>${SEG})/execute/?$`), handler: hWorkflowExecute },
-  { methods: ['GET', 'PUT', 'DELETE'], pattern: new RegExp(`^/api/workflows/(?<id>${SEG})/schedule/?$`), handler: hWorkflowSchedule },
-  { methods: ['GET', 'POST'], pattern: new RegExp(`^/api/workflows/(?<id>${SEG})/webhook/?$`), handler: hWorkflowWebhook }
-];
-
-export function matchRoute(method, pathname) {
-  const m = String(method || 'GET').toUpperCase();
-  for (const route of ROUTES) {
-    if (!route.methods.includes(m)) continue;
-    const match = String(pathname || '/').match(route.pattern);
-    if (match) return { handler: route.handler, params: decodeGroups(match) };
-  }
-  return null;
-}
-
-export default async function handler(req, res) {
-  let pathname = '/';
-  let query = {};
-  try {
-    const url = new URL(req.url, 'http://localhost');
-    pathname = url.pathname || '/';
-    query = parseQuery(url.searchParams);
-  } catch {
-    pathname = String(req.url || '/').split('?')[0];
-  }
-  const method = String(req.method || 'GET').toUpperCase();
-
-  const hit = matchRoute(method, pathname);
-  if (hit) {
-    req.query = { ...query, ...hit.params };
-    try {
-      return await hit.handler(req, res);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(`[api] ${method} ${pathname} failed:`, err);
-      if (!res.headersSent) return send(res, 500, { error: 'Internal server error.' });
-      return undefined;
-    }
-  }
-  return send(res, 404, { error: 'Not found.' });
-}
+export {
+  hHealth,
+  hAiTest,
+  hCronCheck,
+  hDashboardStats,
+  hExecutionsList,
+  hExecutionGet,
+  hExecutionRetry,
+  hWebhookIngress,
+  hWorkflows,
+  hWorkflowDetail,
+  hWorkflowDuplicate,
+  hWorkflowExecute,
+  hWorkflowSchedule,
+  hWorkflowWebhook
+};
