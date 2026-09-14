@@ -1,0 +1,369 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   FlowForge â€” "forge / control room" theme
+   Charcoal chrome (#111418) + molten-amber accent (#f59e0b)
+   Light canvas content areas. Presentation only.
+   ============================================================ */
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: #f4f5f3;
+  color: #1a1f26;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* smooth anchor jumps for the public landing page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ---------- text selection ---------- */
+::selection {
+  background: #f59e0b;
+  color: #111418;
+}
+
+/* ---------- focus-visible rings (amber, keyboard users) ---------- */
+:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- custom scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b8c1cd transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #b8c1cd;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #8a97a8;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+/* dark chrome scrollbars (sidebar / dark panels) */
+.ff-dark-scroll {
+  scrollbar-color: #3d4754 transparent;
+}
+.ff-dark-scroll::-webkit-scrollbar-thumb {
+  background: #3d4754;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.ff-dark-scroll::-webkit-scrollbar-thumb:hover {
+  background: #5b6878;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* ---------- page entrance ---------- */
+@keyframes ff-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: ff-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ---------- staggered lists ---------- */
+@keyframes ff-stagger-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger > * {
+  animation: ff-stagger-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.10s; }
+.stagger > *:nth-child(4) { animation-delay: 0.14s; }
+.stagger > *:nth-child(5) { animation-delay: 0.18s; }
+.stagger > *:nth-child(6) { animation-delay: 0.22s; }
+.stagger > *:nth-child(7) { animation-delay: 0.26s; }
+.stagger > *:nth-child(8) { animation-delay: 0.30s; }
+.stagger > *:nth-child(9) { animation-delay: 0.34s; }
+.stagger > *:nth-child(n+10) { animation-delay: 0.38s; }
+
+/* ---------- skeleton shimmer ---------- */
+@keyframes ff-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background-color: #e9edf1;
+  background-image: linear-gradient(90deg, #e9edf1 25%, #f4f6f8 50%, #e9edf1 75%);
+  background-size: 800px 100%;
+  animation: ff-shimmer 1.4s linear infinite;
+  border-radius: 6px;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+/* ---------- hover micro-interactions + pressed states ---------- */
+.card-lift {
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(17, 20, 24, 0.08), 0 10px 24px -8px rgba(17, 20, 24, 0.18);
+}
+.btn-press {
+  transition: transform 0.08s ease, background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.btn-press:active {
+  transform: translateY(1px) scale(0.985);
+}
+.row-hover {
+  transition: background-color 0.12s ease;
+}
+
+/* tabular numerals for stats / timers */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- landing: hero mesh, 3D tilt, photographic motion ---------- */
+.ff-hero-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(560px 300px at 88% -10%, rgba(245, 158, 11, 0.2), transparent 62%),
+    radial-gradient(480px 320px at 6% 108%, rgba(245, 158, 11, 0.1), transparent 60%);
+}
+
+.ff-tilt-scene {
+  perspective: 1200px;
+}
+
+.ff-tilt {
+  --rx: 0deg;
+  --ry: 0deg;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.ff-orb {
+  position: absolute;
+  z-index: 0;
+  top: -56px;
+  right: -32px;
+  width: 190px;
+  height: 190px;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.4), transparent 70%);
+  animation: ff-orb-drift 13s ease-in-out infinite alternate;
+}
+
+.ff-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.22) 50%, transparent 58%);
+  background-size: 280% 100%;
+  background-position: 120% 0;
+  animation: ff-shine-sweep 9s ease-in-out infinite;
+}
+
+.ff-float-slow {
+  animation: ff-float-y 7s ease-in-out infinite;
+}
+
+.ff-frame {
+  border: 1px solid #e9edf1;
+  box-shadow:
+    0 1px 2px rgba(17, 20, 24, 0.08),
+    0 12px 32px -12px rgba(17, 20, 24, 0.25);
+}
+
+@keyframes ff-orb-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-26px, 22px, 0) scale(1.12);
+  }
+}
+
+@keyframes ff-shine-sweep {
+  0%, 55% {
+    background-position: 120% 0;
+  }
+  85%, 100% {
+    background-position: -40% 0;
+  }
+}
+
+@keyframes ff-float-y {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ============================================================
+   React Flow â€” forge canvas theme (CSS overrides only;
+   all drag / connect / configure / run behavior unchanged)
+   ============================================================ */
+
+/* dotted-grid backdrop tint on the light canvas */
+.react-flow {
+  background-color: #eef0ec;
+}
+.react-flow__pane {
+  background-color: #eef0ec;
+  background-image: radial-gradient(circle, #c3cbc2 1.1px, transparent 1.1px);
+  background-size: 22px 22px;
+  background-position: center center;
+}
+.react-flow__background {
+  background-color: transparent;
+}
+.react-flow__background pattern circle {
+  fill: #b3bcb1;
+}
+
+/* edges: charcoal default, amber when selected */
+.react-flow__edge-path {
+  stroke: #3d4754;
+  stroke-width: 2;
+}
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #b45309;
+}
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path {
+  stroke: #f59e0b;
+  stroke-width: 3;
+}
+.react-flow__edge-textbg {
+  fill: #111418;
+}
+.react-flow__edge-text {
+  fill: #fcd34d;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* connection line while dragging */
+.react-flow__connection-path {
+  stroke: #d97706;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+/* forge nodes */
+.react-flow__node-forge {
+  background: transparent;
+  border: none;
+  transition: transform 0.12s ease;
+}
+.react-flow__node-forge.selected .ff-node {
+  box-shadow: 0 0 0 2px #f59e0b, 0 8px 22px -8px rgba(17, 20, 24, 0.35);
+}
+.ff-node {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease;
+}
+.ff-node:hover {
+  box-shadow: 0 2px 4px rgba(17, 20, 24, 0.08), 0 10px 24px -8px rgba(17, 20, 24, 0.25);
+}
+
+/* handles: dark studs with amber ring */
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: #111418;
+  border: 2px solid #f59e0b;
+}
+.react-flow__handle:hover {
+  background: #f59e0b;
+  border-color: #111418;
+}
+.react-flow__handle.connecting {
+  background: #f59e0b;
+}
+
+/* controls + minimap in dark chrome */
+.react-flow__controls {
+  box-shadow: 0 4px 14px -4px rgba(17, 20, 24, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: #1a1f26;
+  border-bottom: 1px solid #2e3641;
+  fill: #d7dde4;
+}
+.react-flow__controls-button:hover {
+  background: #2e3641;
+}
+.react-flow__controls-button svg {
+  fill: #d7dde4;
+}
+.react-flow__minimap {
+  background: #1a1f26 !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.react-flow__attribution {
+  background: rgba(244, 245, 243, 0.7);
+  color: #8a97a8;
+}
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .page-enter,
+  .stagger > *,
+  .skeleton {
+    animation: none;
+  }
+  .card-lift,
+  .btn-press,
+  .ff-node,
+  .react-flow__node-forge {
+    transition: none;
+  }
+  .ff-tilt {
+    transform: none;
+    transition: none;
+  }
+  .ff-orb,
+  .ff-shine,
+  .ff-float-slow {
+    animation: none;
+  }
+  .ff-hero-mesh {
+    display: none;
+  }
+}
+
